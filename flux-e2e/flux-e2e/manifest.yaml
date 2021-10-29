@@ -1,0 +1,108 @@
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    app.openshift.io/vcs-ref: 7fed3c558c68587a7133c413d901e112989c25b4
+    app.openshift.io/vcs-uri: https://github.com/flux08/flux-e2e
+  labels:
+    app.kubernetes.io/instance: flux-e2e
+    app.kubernetes.io/name: flux-e2e
+  name: flux-e2e
+spec:
+  ports:
+  - name: http
+    port: 80
+    protocol: TCP
+    targetPort: 3000
+  selector:
+    app.kubernetes.io/instance: flux-e2e
+    app.kubernetes.io/name: flux-e2e
+  sessionAffinity: None
+  type: ClusterIP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    app.openshift.io/vcs-ref: 7fed3c558c68587a7133c413d901e112989c25b4
+    app.openshift.io/vcs-uri: https://github.com/flux08/flux-e2e
+  labels:
+    app.kubernetes.io/instance: flux-e2e
+    app.kubernetes.io/name: flux-e2e
+    app.openshift.io/runtime: js
+  name: flux-e2e
+spec:
+  progressDeadlineSeconds: 600
+  replicas: 1
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app.kubernetes.io/instance: flux-e2e
+      app.kubernetes.io/name: flux-e2e
+  template:
+    metadata:
+      annotations:
+        app.openshift.io/vcs-ref: 7fed3c558c68587a7133c413d901e112989c25b4
+        app.openshift.io/vcs-uri: https://github.com/flux08/flux-e2e
+      labels:
+        app.kubernetes.io/instance: flux-e2e
+        app.kubernetes.io/name: flux-e2e
+    spec:
+      containers:
+      - env:
+        - name: INGRESS_HOST
+        - name: PROTOCOLS
+        - name: LOG_LEVEL
+          value: debug
+        image: quay.io/fluxens0/flux-e2e:7fed3c558c68587a7133c413d901e112989c25b4
+        imagePullPolicy: IfNotPresent
+        livenessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /
+            port: 3000
+            scheme: HTTP
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 1
+        name: flux-e2e
+        ports:
+        - containerPort: 3000
+          name: http
+          protocol: TCP
+        readinessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /
+            port: http
+            scheme: HTTP
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 1
+        resources: {}
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext: {}
+      terminationGracePeriodSeconds: 30
+---
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  annotations:
+    app.openshift.io/vcs-ref: 7fed3c558c68587a7133c413d901e112989c25b4
+    app.openshift.io/vcs-uri: https://github.com/flux08/flux-e2e
+  labels:
+    app.kubernetes.io/instance: flux-e2e
+    app.kubernetes.io/name: flux-e2e
+  name: flux-e2e
+spec:
+  tls:
+    termination: edge
+  to:
+    kind: Service
+    name: flux-e2e
+    weight: 100
+  wildcardPolicy: None
